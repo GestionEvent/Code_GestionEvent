@@ -1,14 +1,57 @@
 import { useState } from 'react'
+import { API_URL } from '../config'
 
-export default function Login({ onLogin }) {
-  const [email, setEmail] = useState('')
+export default function Login({ onLogin, onGoToRegister, prefillEmail = '', justRegistered = false }) {
+  const [email, setEmail] = useState(prefillEmail)
   const [password, setPassword] = useState('')
   const [remember, setRemember] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [mode, setMode] = useState('login')
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetPassword, setResetPassword] = useState('')
+  const [resetConfirm, setResetConfirm] = useState('')
+  const [resetLoading, setResetLoading] = useState(false)
+  const [resetError, setResetError] = useState('')
+  const [resetDone, setResetDone] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleResetSubmit = async (e) => {
+    e.preventDefault()
+    setResetError('')
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(resetEmail.trim())) {
+      setResetError('Veuillez saisir une adresse e-mail valide.')
+      return
+    }
+    if (resetPassword.length < 6) {
+      setResetError('Le nouveau mot de passe doit contenir au moins 6 caractères.')
+      return
+    }
+    if (resetPassword !== resetConfirm) {
+      setResetError('Les mots de passe ne correspondent pas.')
+      return
+    }
+    setResetLoading(true)
+    try {
+      const res = await fetch(`${API_URL}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: resetEmail.trim(), newPassword: resetPassword }),
+      })
+      const data = await res.json()
+      setResetLoading(false)
+      if (!res.ok) {
+        setResetError(data.error || 'Une erreur est survenue.')
+        return
+      }
+      setResetDone(true)
+    } catch (err) {
+      setResetLoading(false)
+      setResetError("Impossible de contacter le serveur. Vérifie que le backend tourne bien sur le port 4000.")
+    }
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     if (!email.trim()) {
@@ -24,10 +67,23 @@ export default function Login({ onLogin }) {
       return
     }
     setLoading(true)
-    setTimeout(() => {
+    try {
+      const res = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), password }),
+      })
+      const data = await res.json()
       setLoading(false)
-      onLogin()
-    }, 800)
+      if (!res.ok) {
+        setError(data.error || 'Identifiants invalides.')
+        return
+      }
+      onLogin(data)
+    } catch (err) {
+      setLoading(false)
+      setError("Impossible de contacter le serveur. Vérifie que le backend tourne bien sur le port 4000.")
+    }
   }
 
   return (
@@ -66,7 +122,7 @@ export default function Login({ onLogin }) {
               </svg>
             </div>
             <div>
-              <div style={{ fontWeight: 800, fontSize: 20, color: 'white' }}>EventFlow</div>
+              <div style={{ fontWeight: 800, fontSize: 20, color: 'white' }}>Gestion d'événement</div>
               <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: 500 }}>Suite de gestion</div>
             </div>
           </div>
@@ -105,10 +161,21 @@ export default function Login({ onLogin }) {
         width: 480, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 56px',
       }}>
         <div style={{ width: '100%', maxWidth: 360 }}>
+        {mode === 'login' ? (
+          <>
           <div style={{ marginBottom: 36 }}>
             <h2 style={{ fontSize: 28, fontWeight: 800, color: '#0f172a', marginBottom: 8 }}>Bon retour</h2>
-            <p style={{ fontSize: 14, color: '#64748b' }}>Connectez-vous à votre compte EventFlow</p>
+            <p style={{ fontSize: 14, color: '#64748b' }}>Connectez-vous à votre compte Gestion d'événement</p>
           </div>
+
+          {justRegistered && (
+            <div style={{ marginBottom: 20, padding: '10px 12px', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: 8, fontSize: 13, color: '#059669', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} style={{ flexShrink: 0 }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              Compte créé avec succès ! Connectez-vous pour continuer.
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
             <div style={{ marginBottom: 20 }}>
@@ -183,7 +250,10 @@ export default function Login({ onLogin }) {
                 </div>
                 <span style={{ fontSize: 13, color: '#374151' }}>Se souvenir de moi</span>
               </label>
-              <a style={{ fontSize: 13, color: '#365E8D', fontWeight: 500, cursor: 'pointer', textDecoration: 'none' }}>
+              <a
+                onClick={() => { setMode('forgot'); setResetEmail(email); setResetError(''); setResetDone(false) }}
+                style={{ fontSize: 13, color: '#365E8D', fontWeight: 500, cursor: 'pointer', textDecoration: 'none' }}
+              >
                 Mot de passe oublié ?
               </a>
             </div>
@@ -207,8 +277,93 @@ export default function Login({ onLogin }) {
 
           <p style={{ fontSize: 13, color: '#94a3b8', textAlign: 'center', marginTop: 28 }}>
             Vous n&apos;avez pas de compte ?{' '}
-            <a style={{ color: '#365E8D', fontWeight: 600, cursor: 'pointer' }}>Contactez votre administrateur</a>
+            <a style={{ color: '#365E8D', fontWeight: 600, cursor: 'pointer' }} onClick={onGoToRegister}>Créer un compte</a>
           </p>
+          </>
+        ) : (
+          <>
+            <div style={{ marginBottom: 36 }}>
+              <h2 style={{ fontSize: 28, fontWeight: 800, color: '#0f172a', marginBottom: 8 }}>Mot de passe oublié</h2>
+              <p style={{ fontSize: 14, color: '#64748b' }}>
+                Saisis ton adresse e-mail et choisis un nouveau mot de passe.
+              </p>
+            </div>
+
+            {resetDone ? (
+              <div style={{ padding: '14px 16px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, fontSize: 14, color: '#166534' }}>
+                Mot de passe réinitialisé avec succès.{' '}
+                <a
+                  onClick={() => { setMode('login'); setPassword(''); setEmail(resetEmail) }}
+                  style={{ color: '#166534', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  Se connecter
+                </a>
+              </div>
+            ) : (
+              <form onSubmit={handleResetSubmit}>
+                <div style={{ marginBottom: 20 }}>
+                  <label className="form-label">Adresse e-mail</label>
+                  <input
+                    className="form-input"
+                    type="email"
+                    placeholder="alex@entreprise.com"
+                    value={resetEmail}
+                    onChange={e => setResetEmail(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div style={{ marginBottom: 20 }}>
+                  <label className="form-label">Nouveau mot de passe</label>
+                  <input
+                    className="form-input"
+                    type="password"
+                    placeholder="Au moins 6 caractères"
+                    value={resetPassword}
+                    onChange={e => setResetPassword(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div style={{ marginBottom: 8 }}>
+                  <label className="form-label">Confirmer le nouveau mot de passe</label>
+                  <input
+                    className="form-input"
+                    type="password"
+                    placeholder="Répétez le mot de passe"
+                    value={resetConfirm}
+                    onChange={e => setResetConfirm(e.target.value)}
+                    required
+                  />
+                </div>
+
+                {resetError && (
+                  <div style={{ marginTop: 12, padding: '10px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, fontSize: 13, color: '#dc2626' }}>
+                    {resetError}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  style={{ width: '100%', justifyContent: 'center', height: 44, fontSize: 15, marginTop: 24 }}
+                  disabled={resetLoading}
+                >
+                  {resetLoading ? 'Réinitialisation...' : 'Réinitialiser le mot de passe'}
+                </button>
+              </form>
+            )}
+
+            <p style={{ fontSize: 13, color: '#94a3b8', textAlign: 'center', marginTop: 28 }}>
+              <a
+                onClick={() => setMode('login')}
+                style={{ color: '#365E8D', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Retour à la connexion
+              </a>
+            </p>
+          </>
+        )}
         </div>
       </div>
 

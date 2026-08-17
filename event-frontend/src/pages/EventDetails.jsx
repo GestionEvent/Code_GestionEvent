@@ -133,7 +133,7 @@ export default function EventDetails({ shared, onNavigate }) {
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 24 }}>
                   {[
-                    { label: 'Organisateur', value: 'EventFlow Inc.' },
+                    { label: 'Organisateur', value: "Gestion d'événement" },
                     { label: 'Format', value: 'En présentiel' },
                     { label: 'Catégorie', value: current.category || '—' },
                     { label: 'Lieu', value: current.venue || '—' },

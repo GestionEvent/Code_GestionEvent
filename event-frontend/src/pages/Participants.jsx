@@ -140,7 +140,7 @@ export default function Participants({ shared }) {
                   <th style={{ padding: '12px 20px', width: 40 }}>
                     <input type="checkbox" checked={selected.length === filtered.length && filtered.length > 0} onChange={toggleAll} style={{ cursor: 'pointer', width: 16, height: 16, accentColor: '#365E8D' }} />
                   </th>
-                  {['Participant', 'Événement', 'Inscrit le', 'Billet #', 'Statut d&apos;inscription', 'Présence'].map(h => (
+                  {['Participant', 'Événement', 'Inscrit le', 'Billet #', "Statut d'inscription", 'Présence'].map(h => (
                     <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>

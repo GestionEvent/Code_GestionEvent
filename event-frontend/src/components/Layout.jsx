@@ -54,6 +54,15 @@ const navItems = [
     ),
   },
   {
+    id: 'billing',
+    label: 'Billetterie',
+    icon: (
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    ),
+  },
+  {
     id: 'administration',
     label: 'Administration',
     icon: (
@@ -82,7 +91,7 @@ const SearchIcon = () => (
   </svg>
 )
 
-export default function Layout({ current, onNavigate, children }) {
+export default function Layout({ current, onNavigate, onLogout, children }) {
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#f8fafc' }}>
       {/* Sidebar */}
@@ -109,7 +118,7 @@ export default function Layout({ current, onNavigate, children }) {
               </svg>
             </div>
             <div>
-              <div style={{ fontWeight: 700, fontSize: 15, color: '#0f172a' }}>EventFlow</div>
+              <div style={{ fontWeight: 700, fontSize: 15, color: '#0f172a' }}>Gestion d'événement</div>
               <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 500 }}>Suite de gestion</div>
             </div>
           </div>
@@ -121,7 +130,7 @@ export default function Layout({ current, onNavigate, children }) {
           {navItems.map((item) => (
             <div
               key={item.id}
-              className={`sidebar-link${current === item.id ? ' actifs' : ''}`}
+              className={`sidebar-link${current === item.id ? ' active' : ''}`}
               onClick={() => onNavigate(item.id)}
             >
               {item.icon}
@@ -133,13 +142,23 @@ export default function Layout({ current, onNavigate, children }) {
           {bottomItems.map((item) => (
             <div
               key={item.id}
-              className={`sidebar-link${current === item.id ? ' actifs' : ''}`}
+              className={`sidebar-link${current === item.id ? ' active' : ''}`}
               onClick={() => onNavigate(item.id)}
             >
               {item.icon}
               {item.label}
             </div>
           ))}
+          <div
+            className="sidebar-link"
+            onClick={onLogout}
+            style={{ color: '#dc2626' }}
+          >
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Se déconnecter
+          </div>
         </nav>
       </aside>
 

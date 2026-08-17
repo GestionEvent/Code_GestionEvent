@@ -280,7 +280,7 @@ export default function CreateEvent({ shared, onNavigate }) {
           <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 12, padding: 20 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: '#1e40af', marginBottom: 12 }}>Liste de contrôle de publication</div>
             {[
-              { label: 'Titre de l&apos;événement', done: !!form.title },
+              { label: "Titre de l'événement", done: !!form.title },
               { label: 'Description', done: !!form.description },
               { label: 'Date et heure', done: !!form.date },
               { label: 'Localisation', done: !!form.location },

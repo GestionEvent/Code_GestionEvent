@@ -14,10 +14,62 @@ export default function Dashboard({ shared, onNavigate }) {
   const participants = shared?.participants || []
   const speakers = shared?.speakers || []
 
+  // Beta modules
+  const rooms = shared?.rooms || []
+  const equipment = shared?.equipment || []
+  const emailLogs = shared?.emailLogs || []
+  const transactions = shared?.transactions || []
+  const users = shared?.users || []
+
   const totalEvents = events.length
   const totalParticipants = participants.length
   const upcoming = events.filter(e => e.status === 'Actif' || e.status === 'À venir').length
   const totalCapacity = events.reduce((a, e) => a + (Number(e.capacity) || 0), 0)
+
+  const revenue = transactions.filter(t => t.status === 'Payé').reduce((a, t) => a + (Number(t.amount) || 0), 0)
+  const reservedRooms = rooms.filter(r => r.status === 'Réservée').length
+  const emailsSent = emailLogs.filter(l => l.status === 'Envoyé').length
+  const activeUsers = users.filter(u => u.status === 'Actif').length
+
+  const recapCards = [
+    {
+      label: 'Revenus (billetterie)',
+      value: `${revenue.toLocaleString('fr-FR', { minimumFractionDigits: 0 })} $`,
+      color: '#10b981', bg: '#ecfdf5', target: 'billing',
+      icon: (
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Salles réservées', value: `${reservedRooms}/${rooms.length}`,
+      color: '#365E8D', bg: '#eff6ff', target: 'logistics',
+      icon: (
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+        </svg>
+      ),
+    },
+    {
+      label: 'E-mails envoyés', value: emailsSent,
+      color: '#f59e0b', bg: '#fffbeb', target: 'communications',
+      icon: (
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Utilisateurs actifs', value: `${activeUsers}/${users.length}`,
+      color: '#7c3aed', bg: '#f5f3ff', target: 'administration',
+      icon: (
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      ),
+    },
+  ]
 
   const statCards = [
     {
@@ -130,6 +182,32 @@ export default function Dashboard({ shared, onNavigate }) {
                 {card.change}
               </span>
               <span style={{ fontSize: 12, color: '#94a3b8' }}>vs mois dernier</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Beta modules recap */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', marginBottom: 2 }}>Récapitulatif des modules</div>
+        <div style={{ fontSize: 13, color: '#64748b' }}>Vue d'ensemble de la logistique, la communication, la billetterie et l'administration</div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20, marginBottom: 28 }}>
+        {recapCards.map((card) => (
+          <div
+            key={card.label}
+            className="stat-card"
+            style={{ cursor: 'pointer' }}
+            onClick={() => onNavigate(card.target)}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontSize: 13, color: '#64748b', fontWeight: 500, marginBottom: 8 }}>{card.label}</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a' }}>{card.value}</div>
+              </div>
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: card.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: card.color, flexShrink: 0 }}>
+                {card.icon}
+              </div>
             </div>
           </div>
         ))}

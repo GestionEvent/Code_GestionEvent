@@ -80,7 +80,7 @@ export default function Events({ shared, onNavigate }) {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #f1f5f9', background: '#fafbfc' }}>
-                {['Nom de l&apos;événement', 'Date', 'Lieu', 'Capacité', 'Statut', 'Actions'].map(h => (
+                {["Nom de l'événement", 'Date', 'Lieu', 'Capacité', 'Statut', 'Actions'].map(h => (
                   <th key={h} style={{ padding: '12px 20px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>

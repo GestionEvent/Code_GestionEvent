@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { API_URL } from '../config'
 
 const EMPTY_INFO = {
   firstName: '', lastName: '',
@@ -16,9 +17,13 @@ function loadInfo() {
   }
 }
 
-export default function Profile() {
+export default function Profile({ currentUser }) {
   const [activeTab, setActiveTab] = useState('info')
   const [info, setInfo] = useState(loadInfo)
+  const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
+  const [pwError, setPwError] = useState('')
+  const [pwSaved, setPwSaved] = useState(false)
+  const [pwLoading, setPwLoading] = useState(false)
   const [notifs, setNotifs] = useState({
     newRegistrations: true,
     eventReminders: true,
@@ -64,6 +69,51 @@ const fullName = info.firstName || info.lastName ? `${info.firstName} ${info.las
   )
 
   const setInfoField = (key, val) => setInfo(i => ({ ...i, [key]: val }))
+
+  const handlePasswordSubmit = async () => {
+    setPwError('')
+    if (!currentUser?.email) {
+      setPwError('Session expirée, veuillez vous reconnecter.')
+      return
+    }
+    if (!pwForm.currentPassword) {
+      setPwError('Veuillez saisir votre mot de passe actuel.')
+      return
+    }
+    if (pwForm.newPassword.length < 6) {
+      setPwError('Le nouveau mot de passe doit contenir au moins 6 caractères.')
+      return
+    }
+    if (pwForm.newPassword !== pwForm.confirmPassword) {
+      setPwError('Les mots de passe ne correspondent pas.')
+      return
+    }
+
+    setPwLoading(true)
+    try {
+      const res = await fetch(`${API_URL}/auth/password`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: currentUser.email,
+          currentPassword: pwForm.currentPassword,
+          newPassword: pwForm.newPassword,
+        }),
+      })
+      const data = await res.json()
+      setPwLoading(false)
+      if (!res.ok) {
+        setPwError(data.error || 'Une erreur est survenue.')
+        return
+      }
+      setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+      setPwSaved(true)
+      setTimeout(() => setPwSaved(false), 2000)
+    } catch (err) {
+      setPwLoading(false)
+      setPwError("Impossible de contacter le serveur. Vérifie que le backend tourne bien sur le port 4000.")
+    }
+  }
 
   return (
     <div style={{ maxWidth: 800, margin: '0 auto' }}>
@@ -184,22 +234,45 @@ const fullName = info.firstName || info.lastName ? `${info.firstName} ${info.las
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             <div>
               <label className="form-label">Mot de passe actuel</label>
-              <input className="form-input" type="password" placeholder="Entrez le mot de passe actuel" />
+              <input
+                className="form-input"
+                type="password"
+                placeholder="Entrez le mot de passe actuel"
+                value={pwForm.currentPassword}
+                onChange={e => setPwForm(f => ({ ...f, currentPassword: e.target.value }))}
+              />
             </div>
             <div>
               <label className="form-label">Nouveau mot de passe</label>
-              <input className="form-input" type="password" placeholder="Au moins 8 caractères" />
+              <input
+                className="form-input"
+                type="password"
+                placeholder="Au moins 6 caractères"
+                value={pwForm.newPassword}
+                onChange={e => setPwForm(f => ({ ...f, newPassword: e.target.value }))}
+              />
             </div>
             <div>
               <label className="form-label">Confirmer le nouveau mot de passe</label>
-              <input className="form-input" type="password" placeholder="Répétez le nouveau mot de passe" />
+              <input
+                className="form-input"
+                type="password"
+                placeholder="Répétez le nouveau mot de passe"
+                value={pwForm.confirmPassword}
+                onChange={e => setPwForm(f => ({ ...f, confirmPassword: e.target.value }))}
+              />
             </div>
           </div>
+          {pwError && (
+            <div style={{ marginTop: 16, padding: '10px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, fontSize: 13, color: '#dc2626' }}>
+              {pwError}
+            </div>
+          )}
           <div style={{ marginTop: 24, padding: 16, background: '#f8fafc', borderRadius: 10, fontSize: 13, color: '#64748b', lineHeight: 1.6 }}>
-            Le mot de passe doit contenir au moins 8 caractères et inclure un mélange de lettres, de chiffres et de symboles.
+            Le mot de passe doit contenir au moins 6 caractères.
           </div>
-          <button className="btn-primary" style={{ marginTop: 24 }} onClick={handleSave}>
-            {saved ? 'Mot de passe mis à jour !' : 'Mettre à jour le mot de passe'}
+          <button className="btn-primary" style={{ marginTop: 24 }} onClick={handlePasswordSubmit} disabled={pwLoading}>
+            {pwLoading ? 'Mise à jour...' : pwSaved ? 'Mot de passe mis à jour !' : 'Mettre à jour le mot de passe'}
           </button>
         </div>
       )}
@@ -209,7 +282,7 @@ const fullName = info.firstName || info.lastName ? `${info.firstName} ${info.las
         <div className="card" style={{ padding: 32 }}>
           {[
             {
-              section: 'Notifications d&apos;événement',
+              section: "Notifications d'événement",
               items: [
                 { key: 'newRegistrations', label: 'Nouvelles inscriptions', desc: 'Soyez notifié lorsqu\'une personne s\'inscrit à votre événement' },
                 { key: 'eventReminders', label: 'Rappels d\'événement', desc: 'Rappels 24 heures et 1 heure avant le début de votre événement' },
@@ -221,13 +294,13 @@ const fullName = info.firstName || info.lastName ? `${info.firstName} ${info.las
               section: 'Rapports & Marketing',
               items: [
                 { key: 'weeklyReports', label: 'Rapports de synthèse hebdomadaires', desc: 'Recevez un digest hebdomadaire des performances de vos événements' },
-                { key: 'marketingEmails', label: 'Mises à jour produit & fonctionnalités', desc: 'Découvrez les nouvelles fonctionnalités et astuces EventFlow' },
+                { key: 'marketingEmails', label: 'Mises à jour produit & fonctionnalités', desc: "Découvrez les nouvelles fonctionnalités et astuces de Gestion d'événement" },
               ],
             },
             {
               section: 'Canaux de diffusion',
               items: [
-                { key: 'browserPush', label: 'Notifications push du navigateur', desc: 'Alertes dans le navigateur lorsque EventFlow est ouvert' },
+                { key: 'browserPush', label: 'Notifications push du navigateur', desc: "Alertes dans le navigateur lorsque Gestion d'événement est ouvert" },
                 { key: 'smsAlerts', label: 'Alertes SMS', desc: 'Alertes par SMS uniquement pour les événements critiques' },
               ],
             },
