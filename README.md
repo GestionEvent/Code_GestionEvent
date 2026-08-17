@@ -1,0 +1,23 @@
+GestionEvent — Backend (alpha)
+
+API REST Node.js / Express / MySQL pour l'application GestionEvent (gestion d'événements). Ce backend remplace le localStorage utilisé jusqu'ici par le frontend React/Vite.
+
+Stack technique : Node.js en CommonJS, Express 4, MySQL via mysql2/promise avec un pool de connexions, authentification par email et mot de passe hashé avec bcryptjs (pas de session ni de JWT pour l'instant), CORS géré via le package cors avec l'origine autorisée définie par CLIENT_ORIGIN, configuration via dotenv.
+
+Installation : lance npm install, copie .env.example vers .env puis renseigne DB_USER et DB_PASSWORD, importe le schéma avec mysql -u root -p suivi de moins de schema.sql, puis lance npm run dev. Le serveur démarre sur http://localhost:4000, le port est configurable via la variable PORT. La route GET /api/health renvoie status ok pour vérifier que le serveur tourne.
+
+Modèle de données : cinq tables. users pour l'authentification minimale avec name, email unique et password_hash. events pour les événements avec titre, catégorie, date, capacité, prix et statut. event_speakers pour les intervenants saisis à la création d'un événement, liés à un event_id avec suppression en cascade. speakers pour l'annuaire indépendant des intervenants utilisé par la page Speakers. participants pour les inscriptions, liées à un event_id, avec statut d'inscription, présence et un code de ticket unique généré côté serveur.
+
+Endpoints d'authentification, préfixe /api/auth : POST /register pour créer un compte, POST /login pour se connecter et récupérer id, name et email, PUT /password pour changer son mot de passe en fournissant l'ancien, POST /forgot-password pour réinitialiser le mot de passe à partir de l'email seul, ce qui n'est pas sûr pour de la production.
+
+Endpoints événements, préfixe /api/events : GET / pour lister les événements avec le nombre d'inscrits calculé automatiquement, GET /:id pour le détail d'un événement avec ses intervenants, POST / pour créer un événement avec ses intervenants, PUT /:id pour modifier un événement en n'envoyant que les champs à changer, DELETE /:id pour supprimer un événement, ce qui supprime aussi ses intervenants et ses inscriptions.
+
+Endpoints participants, préfixe /api/participants : GET / pour la liste des participants, POST / pour inscrire un participant en indiquant eventId comme identifiant numérique de l'événement, DELETE / pour une suppression multiple en envoyant un tableau d'identifiants.
+
+Endpoints intervenants, préfixe /api/speakers : GET / pour l'annuaire, POST / pour ajouter un intervenant, PUT /:id pour le modifier, DELETE /:id pour le supprimer.
+
+Points de conception à connaître avant de brancher le frontend : le champ registered n'est plus stocké mais calculé à partir du nombre réel de participants, donc il ne faut pas réintroduire un champ modifiable côté client. Le formulaire d'inscription des participants envoie aujourd'hui le nom de l'événement en texte libre alors que l'API attend un identifiant numérique, il faudra donc soit ajouter un menu déroulant d'événements existants soit résoudre le nom vers un identifiant avant l'envoi. Les intervenants existent en double dans le modèle actuel, ceux saisis à la création d'un événement et l'annuaire indépendant de la page Speakers, sans lien entre les deux, ce qui reflète ce que fait déjà le frontend mais reste une incohérence à trancher.
+
+Sécurité, à corriger avant toute mise en ligne même de démo : le fichier .env.example contient actuellement le vrai mot de passe de la base de données identique à celui du .env réel, ce mot de passe doit être changé puisqu'il a déjà circulé, et .env.example doit contenir une valeur bidon comme changeme. Il n'y a pas de fichier .gitignore, il faut en ajouter un listant .env et node_modules avant tout premier commit pour éviter que le vrai mot de passe parte dans l'historique Git. La route forgot-password réinitialise le mot de passe avec pour seule preuve de connaître l'email du compte, ce qui permet à n'importe qui connaissant cet email de prendre le compte, une vraie implémentation nécessiterait un token à usage unique envoyé par email. Il n'y a par ailleurs aucune session ni token après la connexion, donc toute route protégée fait aujourd'hui confiance au frontend sans vérification côté serveur, ce qui est acceptable en local pour un alpha mais pas au-delà.
+
+État actuel : le backend est fonctionnel et testable en local, il couvre les quatre entités du frontend, mais le frontend n'est pas encore branché dessus, il reste à remplacer les appels à store.js par des appels à cette API, et les trois points de sécurité ci-dessus sont à traiter avant de sortir ce projet du cadre d'une démo locale.
