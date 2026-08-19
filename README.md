@@ -25,6 +25,10 @@ npm install
 npm run dev
 ```
 
+##  NB :
+* créer un fichier (.env) dans event-backend avec le contenus exactement comme dans le fichier (.env.example) mais avec le nom et mot de passe du base de données local.
+
+
 ##  Technologies
 
 * Frontend : Vite / TypeScript
